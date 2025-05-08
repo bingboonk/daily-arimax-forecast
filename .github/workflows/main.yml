@@ -1,0 +1,37 @@
+name: Daily Forecast
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 6:00 AM PHT = 10:00 PM UTC
+  workflow_dispatch:       # allow manual trigger
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+
+    env:
+      DRIVE_PATH: ${{ secrets.DRIVE_PATH }}
+      CSV_FOLDER: ${{ secrets.CSV_FOLDER }}
+      SHEET_ID: ${{ secrets.SHEET_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas statsmodels matplotlib google-api-python-client google-auth
+
+      - name: Create credentials JSON
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" > creds.json
+
+      - name: Run forecasting script
+        run: |
+          python forecast.py creds.json
